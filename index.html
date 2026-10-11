@@ -532,3 +532,11 @@
 <script src="app.js"></script>
 </body>
 </html>
+<input id="nom" placeholder="Nom">
+<input id="montant" placeholder="Montant" type="number">
+
+<button onclick="saveData(document.getElementById('nom').value, document.getElementById('montant').value)">
+  Enregistrer sur téléphone
+</button>
+
+<table><tbody id="table-body"></tbody></table>
