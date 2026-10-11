@@ -1,6 +1,43 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSy...  VA DANS Firebase > Paramètres projet >",
+    authDomain: "unamdd-cloud.firebaseapp.com",
+    projectId: "unamdd-cloud",
+    storageBucket: "unamdd-cloud.appspot.com",
+    appId: "1:..."
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  
+  // MODE HORS LIGNE POUR BUKAVU / LUSHI
+  enableIndexedDbPersistence(db).catch(()=>{});
+
+  // Fonction appelée par ton bouton sur téléphone
+  window.saveData = async (nom, montant) => {
+    await addDoc(collection(db, "transactions"), {
+      nom: nom,
+      montant: montant,
+      date: new Date(),
+      sync: false
+    });
+  }
+
+  // Sur ton ordi, ça écoute automatiquement
+  onSnapshot(collection(db, "transactions"), (snap) => {
+    console.log("Nouvelle donnée reçue du téléphone:", snap.docs.length);
+    // Ici tu mets à jour ton tableau HTML
+    let html = "";
+    snap.forEach(d => { html += <tr><td>${d.data().nom}</td><td>${d.data().montant}</td></tr> });
+    if(document.getElementById('table-body')) document.getElementById('table-body').innerHTML = html;
+  });
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0A2540">
