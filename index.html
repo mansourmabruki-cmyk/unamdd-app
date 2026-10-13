@@ -3,18 +3,20 @@
 <head>
   <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+import { getFirestore, collection, addDoc, onSnapshot, enableIndexedDbPersistence, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   const firebaseConfig = {
-    apiKey: "AIzaSy...  VA DANS Firebase > Paramètres projet >",
-    authDomain: "unamdd-cloud.firebaseapp.com",
-    projectId: "unamdd-cloud",
-    storageBucket: "unamdd-cloud.appspot.com",
-    appId: "1:..."
-  };
+  apiKey: "AIzaSyDxt1_vurSqngt7gdMqztAuLojF3wB6gSo",
+  authDomain: "unamdd-cloud.firebaseapp.com",
+  databaseURL: "https://unamdd-cloud-default-rtdb.firebaseio.com",
+  projectId: "unamdd-cloud",
+  storageBucket: "unamdd-cloud.firebasestorage.app",
+  messagingSenderId: "549491701256",
+  appId: "1:549491701256:web:d71e3fb0b65aedc8f783bd"
+};
+  
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  const db = getFirestore(app);enableIndexedDbPersistence(db);//
   
   // MODE HORS LIGNE POUR BUKAVU / LUSHI
   enableIndexedDbPersistence(db).catch(()=>{});
@@ -526,17 +528,82 @@
       <button class="btn btn-danger btn-block" onclick="resetSettings()">♻️ Réinitialiser aux valeurs par défaut</button>
     </div>
   </section>
-
-  <div class="toast" id="toast"></div>
+ <div class="toast" id="toast"></div>
 </div>
-<script src="app.js"></script>
-</body>
-</html>
-<input id="nom" placeholder="Nom">
-<input id="montant" placeholder="Montant" type="number">
+    <div class="toast" id="toast"></div>
+    </div>
 
-<button onclick="saveData(document.getElementById('nom').value, document.getElementById('montant').value)">
-  Enregistrer sur téléphone
-</button>
+    <!-- TES CHAMPS DOIVENT ÊTRE DANS LE BODY -->
+    <input id="nom" placeholder="Nom">
+    <input id="montant" placeholder="Montant" type="number">
+    
+    <button onclick="saveData()">Enregistrer sur téléphone</button>
+    
+    <table border="1" style="width:100%; margin-top:10px;">
+      <thead><tr><th>Nom</th><th>Montant</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
 
-<table><tbody id="table-body"></tbody></table>
+    <!-- SCRIPT FIREBASE + OFFLINE -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, onSnapshot, enableIndexedDbPersistence, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      // 1. METS TA VRAIE CONFIG FIREBASE ICI
+      const firebaseConfig = {
+        apiKey: "TA_API_KEY",
+        authDomain: "unamdd-cloud.firebaseapp.com",
+        projectId: "unamdd-cloud",
+        storageBucket: "unamdd-cloud.appspot.com",
+        messagingSenderId: "TON_ID",
+        appId: "TON_APP_ID"
+      };
+
+      // 2. INITIALISATION
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // 3. ACTIVER LE MODE OFFLINE
+      enableIndexedDbPersistence(db).catch((err) => {
+          console.log("Erreur cache:", err.code);
+      });
+
+      // 4. FONCTION ENREGISTRER - Marche offline
+      window.saveData = async function(){
+        let nom = document.getElementById('nom').value;
+        let montant = document.getElementById('montant').value;
+        if(nom == "" || montant == "") return;
+        
+        await addDoc(collection(db, "unamdd"), { 
+          nom: nom, 
+          montant: montant, 
+          time: serverTimestamp() 
+        });
+        
+        document.getElementById('nom').value = "";
+        document.getElementById('montant').value = "";
+        document.getElementById("toast").innerText = "Enregistré !";
+        setTimeout(()=> document.getElementById("toast").innerText = "", 2000);
+      }
+
+      // 5. AFFICHER LES DONNÉES - Même offline
+      const q = query(collection(db, "unamdd"), orderBy("time", "desc"));
+      onSnapshot(q, (snapshot) => {
+        let html = "";
+        snapshot.forEach((doc) => {
+          html += `<tr><td>${doc.data().nom}</td><td>${doc.data().montant}</td></tr>`;
+        });
+        document.getElementById("table-body").innerHTML = html;
+      });
+
+    </script>
+
+    <!-- SERVICE WORKER POUR PWA OFFLINE -->
+    <script>
+      if('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+      }
+    </script>
+    
+  </body>
+</html> 
